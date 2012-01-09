@@ -1,0 +1,22 @@
+{
+    "data.set1" : {
+        "regex" : ".*network$",
+        "category" : "IFACE",
+        "exclude" : [ "lo" ],
+        "processor1" : {
+            "group" : [ "rxpck/s", "txpck/s" ],
+            "trans" : [ "100 - x" ],
+            "alias" : [ "Received/sec", "Sent/sec" ],
+            "Title" : "Total Packets",
+            "fileprefix" : "packets",
+            "graphs" : [ "boxjit", "jitter", "box", "timeseries" ],
+            summarize : "True"
+        }
+        "processor2" : {
+            "group" : [ "rxpck/s", "txpck/s" ],
+            "alias" : [ "Received/sec", "Sent/sec" ],
+            "graphs" : [ "boxjit", "jitter", "box", "timeseries"]
+        }
+    
+    }
+}
