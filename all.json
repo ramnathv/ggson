@@ -1,0 +1,125 @@
+{
+
+ "cpu" : {
+    "pattern" : ".*allcpu$",
+    "category" : "CPU",
+    "exclude" : ["4", "5", "6", "7", "all"],
+    "usage" : {
+            "group" : ["%idle"],
+            "trans" : ["100 - x"],
+            "alias" : ["% Busy"],
+            "Title" : "CPU Utilization",
+            "fileprefix" : "cpuutil",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries"]
+    }
+ },
+ "queue" : {
+    "pattern" : ".*queue$",
+        "processor1" : {
+            "group" : ["ldavg-1", "ldavg-5", "ldavg-15" ],
+            "alias" : [ "1Min", "5 Min", "15 Min" ],
+            "Title" : "Load Average",
+            "fileprefix" : "load",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries"]
+        }
+    },
+    "nfs" : {
+    "pattern" : ".*nfs$",
+        "processor1" : {
+            "group" : ["write/s"],
+            "alias" : ["Writes/sec"],
+            "Title" : "NFS Write Calls/sec",
+            "fileprefix" : "nfswr",
+            "alpha" : 20,
+            "graphs" : [ "timeseries", "boxplt", "boxjit"]
+        },
+        "readp" : {
+            "group" : ["read/s"],
+            "alias" : ["Read/sec"],
+            "Title" : "NFS Read Calls/sec",
+            "fileprefix" : "nfsrd",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        }
+    },
+    "block" : {
+        "pattern" : ".*block$",
+        "read" : {
+            "group" : ["bwrtn/s"],
+            "alias" : ["Write/sec"],
+            "Title" : "Blocks Written/sec",
+            "fileprefix" : "blockwr",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        },
+        "write" : {
+            "group" : ["bread/s"],
+            "alias" : ["Read/sec"],
+            "Title" : "Blocks Read/sec",
+            "fileprefix" : "blockrd",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        }
+    },
+    "iostat" : {
+        "pattern" : ".*iostat$",
+        "times" : {
+            "group" : ["await", "svctm"],
+            "alias" : ["Wating Time", "Service Time"],
+            "Title" : "Device Wise Service and Wating Time",
+            "fileprefix" : "iotm",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        },
+        "queue" : {
+            "group" : ["avgrq-sz"],
+            "alias" : ["Request Queue Length"],
+            "Title" : "Average Request Queue Length (in sectors)",
+            "fileprefix" : "ioq",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        },
+        "ioutil" : {
+            "group" : ["%util"],
+            "alias" : ["% Util"],
+            "Title" : "Percentage of CPU during I/O",
+            "fileprefix" : "ioutil",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        }
+    },
+    "memory" : {
+        "pattern" : ".*memory$",
+        "util" : {
+            "group" : ["%swpused", "%memused"],
+            "alias" : [ "% Swap Used", "% Memory Used" ],
+            "Title" : "Memory Utilization",
+            "fileprefix" : "memutil",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        }
+    },
+    "network" : {
+        "pattern" : ".*network$",
+        "category" : "IFACE",
+        "packets" : {
+            "group" : ["rxpck/s","txpck/s"],
+            "alias" : [ "Received", "Transferred" ],
+            "Title" : "Network Packets",
+            "fileprefix" : "netpacket",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        },
+        "kbytes" : {
+            "group" : ["rxbyt/s","txbyt/s"],
+            "trans" : [ "x / 1024", "x / 1024"  ],
+            "alias" : [ "Received", "Transferred" ],
+            "Title" : "Network Throughput (in KB)",
+            "fileprefix" : "nettrh",
+            "alpha" : 20,
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        }
+    }
+}
