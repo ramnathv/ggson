@@ -35,15 +35,13 @@ generate.facet = function(data, factor_col, reverse=F, mncr=4) {
 
 
 boxplt = function(data, pdesc) {
-    dofacet = T
     if (is.null(pdesc$category)) {
         pdesc$category = 'test.name'
-        dofacet = F
     }
 
     p = ggplot(data) + geom_boxplot(aes_string(x=pdesc$category, y='value'))
-    if (dofacet  && (length(levels(data[['variable']])) > 1 ||length(levels(data[[pdesc$category]])) > 1 || length(levels(data[['test.name']])) > 1))
-        p = p + generate.facet(data, NULL)
+    if (is.facetable(data, pdesc$category))
+        p = p + gen.simple.facet(data, pdesc$category)
     return (p)
 }
 
@@ -51,54 +49,59 @@ boxpltflp = function(data, pdesc) {
     if (is.null(pdesc$category))
         pdesc$category = 'test.name'
     p = ggplot(data) + geom_boxplot(aes_string(x=pdesc$category, y='value'))
-    if (length(levels(data[['variable']])) > 1 ||length(levels(data[[pdesc$category]])) > 1 || length(levels(data[['test.name']])) > 1)
-        p = p + generate.facet(data, NULL, reverse=T)
+    if (is.facetable(data, pdesc$category))
+        p = p + gen.simple.facet(data, NULL, reverse=T)
 }
 
 jit = function(data, pdesc) {
-    dofacet = T
     if (is.null(pdesc$category)) {
         pdesc$category = 'test.name'
-        dofacet = F
     }
 
     if (is.null(pdesc$alpha)) pdesc$alpha = 1
     p = ggplot(data) + geom_jitter(aes_string(x=pdesc$category, y='value'), alpha=I(1/pdesc$alpha))
-    if (dofacet && (length(levels(data[['variable']])) > 1 ||length(levels(data[[pdesc$category]])) > 1 || length(levels(data[['test.name']])) > 1))
-        p = p + generate.facet(data, NULL) 
+    if (is.facetable(data, pdesc$category))
+        p = p + gen.simple.facet(data, NULL) 
 }
 
 is.facetable = function(data, category) {
     length(levels(data[['variable']])) > 1 ||length(levels(data[[category]])) > 1 || length(levels(data[['test.name']])) > 1
 }
 
-boxjit = function(data, pdesc) {
-
-    dofacet = T
-    if (is.null(pdesc$category)) {
-        pdesc$category = 'test.name'
-        dofacet = F
+gen.simple.facet = function(data, category, reverse=F) {
+    if (category == 'test.name') {
+        if (length(levels(data[['variable']])) == 1) return (NULL)
+        facets = 'variable~.'
+    }
+    else if (category == 'variable')
+        facets = '.~test.name'
+    else if (length(levels(data[['variable']])) > 1 && length(levels(data[['test.name']])) > 1)
+        facets = paste('variable', 'test.name', sep='~')
+    else if (length(levels(data[['variable']])) > 1)
+        facets = paste('test.name', 'variable', sep='~')
+    else 
+        facets = paste('.', 'test.name', sep='~')
+    
+    
+    parts = str_split(facets, '~')[[1]]
+    if (reverse) {
+        facets = paste(parts[2], parts[1], sep='~')
     }
 
-    print(pdesc$category)
-    if (is.null(pdesc$alpha)) pdesc$alpha = 1
-    p = ggplot(data, aes_string(x=pdesc$category, y='value')) + geom_boxplot() + geom_jitter(alpha=I(1/pdesc$alpha)) 
-    if (dofacet && is.facetable(data, pdesc$category))
-            p = p + generate.facet(data, NULL)+ opts(axis.text.x=theme_text(angle=90))
-    else p
+    if (length(grep(parts, pattern='^\\.$')) == 0) 
+        return (facet_grid(facets))
+
+    parts = str_split(facets, '~')[[1]]
+    if (parts[1] == '.') {
+        mncr = as.integer(length(levels(data[[parts[2]]])) / 2)
+        f = facet_wrap(parts[2], ncol=mncr)
+    } else {
+        mncr = as.integer(length(levels(data[[parts[1]]])) / 2)
+        f = facet_wrap(parts[1], nrow=mncr)
+    }
 }
 
-timeseries = function(data, pdesc) {
-    if (is.null(pdesc$alpha)) pdesc$alpha = 1
-    if (is.null(pdesc$category)) pdesc$category = '.'
-    if (!is.null(pdesc$color))
-        p = ggplot(data, aes(Time, value)) + geom_point(aes_string(color=pdesc$color), alpha=I(1/pdesc$alpha)) + geom_smooth(aes_string(color=pdesc$color))
-    else
-        p = ggplot(data, aes(Time, value)) + geom_point(alpha=I(1/pdesc$alpha)) + geom_smooth()
-    if (length(levels(data[['variable']])) > 1 ||length(levels(data[[pdesc$category]])) > 1 || length(levels(data[['test.name']])) > 1)
-        p = p + generate.facet(data, pdesc$category) 
-    p + scale_x_datetime(format="%H:%M:%S") + opts(axis.text.x=theme_text(angle=90))
-}
+
 
 open_device  = function(gdesc, fileprefix, height, width) {
     if (is.null(height)) height = 600
@@ -116,11 +119,6 @@ mysummary = function(x, ...) {
     names(r2) = names(r)
     return (r2)
 }
-summarize.data = function(data, pdesc) {
-    file = paste(out.location, paste(pdesc$fileprefix, 'summary', sep=''), sep='/')
-    d = ddply(data[,-1], .(variable, test.name), summary)
-    write.csv(d, file=file)
-}
 
 process.plot = function(gdesc, pdesc) {
     f = get(gdesc)
@@ -133,28 +131,12 @@ process.plot = function(gdesc, pdesc) {
     }
     if (!is.null(pdesc$Title))
         plt = plt + opts(title=pdesc$Title)
-    print("creating graph")
     print(plt)
     dev.off()
 }
 
 build_condition = function(x, values, sep='==', condition='|') {
     paste(paste(x, values, sep=sep), sep=condition)
-}
-
-modify = function(data,group,trans) {
-    trans = c(trans, rep('x', times=length(group) - length(trans)))
-    d = data.frame(variable=group, trans=trans, stringsAsFactors=F) 
-    #transfrmed = ddply(d, .(variable), .fun=do.trans, data)
-    for (i in 1:nrow(d)) {
-        x = data[[d[i,1]]]
-        data[[as.character(d[i, 1])]] = eval(parse(text=as.character(d[i, 2])))
-    }
-    return (data)
-}
-
-ggrep = function(pattern, x) {
-    grep(pattern, x)
 }
 
 process.graphs = function(pdesc, ddesc) {
@@ -172,6 +154,58 @@ process.graphs = function(pdesc, ddesc) {
     l_ply(pdesc$graphs, process.plot, .progress='text', pdesc)
 }
 
+jitbox = function(data, pdesc) {
+
+    if (is.null(pdesc$category)) {
+        pdesc$category = 'test.name'
+    }
+
+    if (is.null(pdesc$alpha)) pdesc$alpha = 1
+    p = ggplot(data, aes_string(x=pdesc$category, y='value')) + geom_jitter(alpha=I(1/pdesc$alpha)) + geom_boxplot() 
+    if (is.facetable(data, pdesc$category)) {
+            facet = gen.simple.facet(data, pdesc$category)
+            p = p + facet + opts(axis.text.x=theme_text(angle=90))
+    } else p
+}
+boxjit = function(data, pdesc) {
+
+
+    if (is.null(pdesc$category)) {
+        pdesc$category = 'test.name'
+    }
+
+    if (is.null(pdesc$alpha)) pdesc$alpha = 1
+    p = ggplot(data, aes_string(x=pdesc$category, y='value')) + geom_boxplot() + geom_jitter(alpha=I(1/pdesc$alpha)) 
+    if (is.facetable(data, pdesc$category)) {
+            facet = gen.simple.facet(data, pdesc$category)
+            p = p + facet + opts(axis.text.x=theme_text(angle=90))
+    } else p
+}
+
+timeseries = function(data, pdesc) {
+    if (is.null(pdesc$alpha)) pdesc$alpha = 1
+    if (is.null(pdesc$category)) pdesc$category = '.'
+    if (!is.null(pdesc$color))
+        p = ggplot(data, aes(Time, value)) + geom_point(aes_string(color=pdesc$color), alpha=I(1/pdesc$alpha)) + geom_smooth(aes_string(color=pdesc$color))
+    else
+        p = ggplot(data, aes(Time, value)) + geom_point(alpha=I(1/pdesc$alpha)) + geom_smooth()
+    if (length(levels(data[['variable']])) > 1 ||length(levels(data[[pdesc$category]])) > 1 || length(levels(data[['test.name']])) > 1)
+        p = p + generate.facet(data, pdesc$category) 
+    p + scale_x_datetime(format="%H:%M:%S") + opts(axis.text.x=theme_text(angle=90))
+}
+
+
+modify = function(data,group,trans) {
+    trans = c(trans, rep('x', times=length(group) - length(trans)))
+    d = data.frame(variable=group, trans=trans, stringsAsFactors=F) 
+    #transfrmed = ddply(d, .(variable), .fun=do.trans, data)
+    for (i in 1:nrow(d)) {
+        x = data[[d[i,1]]]
+        data[[as.character(d[i, 1])]] = eval(parse(text=as.character(d[i, 2])))
+    }
+    return (data)
+}
+
 read.data = function(file) {
     test.name = basename(dirname(file))
     data = read.sar.file(file, elapsed=T)
@@ -181,7 +215,6 @@ read.data = function(file) {
 
 data.processor = function(ddesc, path) {
     files = list.files(path=path, ddesc$pattern, recursive=T, full.names=T)
-    print(files)
     ddesc$data = ldply(files, read.data)
     if (!is.null(ddesc$exclude) & length(ddesc$exclude) != 0) {
         ddesc$exclude = paste("'", ddesc$exclude, "'", sep='')

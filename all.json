@@ -3,7 +3,6 @@
  "cpu" : {
     "pattern" : ".*allcpu$",
     "category" : "CPU",
-    "exclude" : ["4", "5", "6", "7", "all"],
     "usage" : {
             "group" : ["%idle"],
             "trans" : ["100 - x"],
@@ -33,7 +32,7 @@
             "Title" : "NFS Write Calls/sec",
             "fileprefix" : "nfswr",
             "alpha" : 20,
-            "graphs" : [ "timeseries", "boxplt", "boxjit"]
+            "graphs" : ["boxjit"]
         },
         "readp" : {
             "group" : ["read/s"],
@@ -104,6 +103,7 @@
     "network" : {
         "pattern" : ".*network$",
         "category" : "IFACE",
+        "exclude" : [ "lo", "eth0", "sit0" ],
         "packets" : {
             "group" : ["rxpck/s","txpck/s"],
             "alias" : [ "Received", "Transferred" ],

@@ -115,7 +115,6 @@ read.sar.file = function(sarfile, test.name=basename(dirname(sarfile)), rundate=
     sar$Time = sar$times
     sar$times = NULL
     names(sar) = c(readFields(sarfile), 'test.name')
-    print(head(sar))
     return (sar)
 }
 
