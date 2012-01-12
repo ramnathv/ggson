@@ -6,10 +6,8 @@ library('reshape')
 source('reader.sar.r')
 generate.facet = function(data, factor_col, reverse=F, mncr=4) {
     if (is.null(factor_col)) factor_col = '.'
-    if (length(levels(data$variable)) == 1 && factor_col == '.')
+    if (length(levels(data$variable)) == 1)
         facets = paste(factor_col, 'test.name', sep='~')
-    else if (length(levels(data$variable)) > 1 && factor_col == '.' && length(levels(data$test.name)) > 1)
-        facets = paste('variable', factor_col, sep='~')
     else if (factor_col != '.' & length(levels(data$test.name)) == 1)
         facets = paste('variable', factor_col, sep='~')
     else if (factor_col != '.')
