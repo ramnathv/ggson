@@ -10,7 +10,7 @@
             "Title" : "CPU Utilization",
             "fileprefix" : "cpuutil",
             "alpha" : 20,
-            "graphs" : ["boxjit", "timeseries"]
+            "graphs" : ["boxjit", "timeseries", "jitbox", "boxplt"]
     }
  },
  "queue" : {
@@ -21,7 +21,7 @@
             "Title" : "Load Average",
             "fileprefix" : "load",
             "alpha" : 20,
-            "graphs" : ["boxjit", "timeseries"]
+            "graphs" : ["boxjit", "timeseries", "boxplt", "jitbox"]
         }
     },
     "nfs" : {
@@ -51,6 +51,7 @@
             "Title" : "Blocks Written/sec",
             "fileprefix" : "blockwr",
             "alpha" : 20,
+            "yscale" : "log10",
             "graphs" : ["boxjit", "timeseries", "boxplt"]
         },
         "write" : {
@@ -62,11 +63,24 @@
             "graphs" : ["boxjit", "timeseries", "boxplt"]
         }
     },
+    "context" : {
+        "pattern" : ".*context$",
+        "cswch" : {
+            "group" : [ "cswch/s" ],
+            "alias" : ["Context Switches/sec"],
+            "Title" : "Context Switches/sec",
+            "fileprefix" : "cntx",
+            "alpha" : 20,
+            "yscale" : "log10",
+            "graphs" : ["boxjit", "timeseries", "boxplt"]
+        }
+    },
     "iostat" : {
         "pattern" : ".*iostat$",
+        "category" : "DEV",
         "times" : {
             "group" : ["await", "svctm"],
-            "alias" : ["Wating Time", "Service Time"],
+            "alias" : ["Waiting Time", "Service Time"],
             "Title" : "Device Wise Service and Wating Time",
             "fileprefix" : "iotm",
             "alpha" : 20,
@@ -110,6 +124,7 @@
             "Title" : "Network Packets",
             "fileprefix" : "netpacket",
             "alpha" : 20,
+            "yscale" : "log10",
             "graphs" : ["boxjit", "timeseries", "boxplt"]
         },
         "kbytes" : {
@@ -119,6 +134,7 @@
             "Title" : "Network Throughput (in KB)",
             "fileprefix" : "nettrh",
             "alpha" : 20,
+            "yscale" : "log10",
             "graphs" : ["boxjit", "timeseries", "boxplt"]
         }
     }

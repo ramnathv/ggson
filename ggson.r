@@ -36,7 +36,9 @@ generate.facet = function(data, factor_col, reverse=F, mncr=4) {
 lesser.first = function(data, ftrs) {
     l1 = levels(data[[ftrs[1]]])
     l2 = levels(data[[ftrs[2]]])
-    if (length(l2) == 1 && length(l1) == 1) return (NULL)
+    if (length(l2) == 1 && length(l1) == 1) {
+        return (NULL)
+    }
     if (length(l1) == 1) return (c('.', ftrs[2]))
     if (length(l2) == 1) return (c('.', ftrs[1]))
     if (length(l1) > length(l2)) return (ftrs[c(2, 1)])
@@ -53,7 +55,6 @@ gen.fcts = function(data, xfactor) {
     else ftrs = lesser.first(data, ftrs)
     if (is.null(ftrs)) return (NULL)
     facets = paste(ftrs, collapse='~')
-    print(facets)
     parts = str_split(facets, '~')[[1]]
     if (length(grep(parts, pattern='^\\.$')) == 0)
         return (facet_grid(facets))
@@ -62,15 +63,16 @@ gen.fcts = function(data, xfactor) {
     if (parts[1] == '.') {
         mncr = as.integer(length(levels(data[[parts[2]]])) / 2)
         if (length(levels(data[[parts[2]]])) == 1)  return (NULL)
+        if (mncr == 1) mncr = 2
         f = facet_wrap(parts[2], ncol=mncr)
     } else {
         mncr = as.integer(length(levels(data[[parts[1]]])) / 2)
         if (length(levels(data[[parts[1]]])) == 1)  return (NULL)
+        if (mncr == 1) mncr = 2
         f = facet_wrap(parts[1], nrow=mncr)
     }
     return (f)
 }
-
 
 boxplt = function(data, pdesc) {
     if (is.null(pdesc$category)) {
@@ -80,7 +82,14 @@ boxplt = function(data, pdesc) {
     p = ggplot(data) + geom_boxplot(aes_string(x=pdesc$category, y='value'))
     if (is.facetable(data, pdesc$category))
         p = p + gen.fcts(data, pdesc$category)
+    if (!is.null(pdesc$yscale)) {
+        scale = paste('scale_y', pdesc$yscale, sep='_')
+        f = get(scale)
+        p = p + f()
+    }
+    
     return (p)
+
 }
 
 boxpltflp = function(data, pdesc) {
@@ -100,6 +109,12 @@ jit = function(data, pdesc) {
     p = ggplot(data) + geom_jitter(aes_string(x=pdesc$category, y='value'), alpha=I(1/pdesc$alpha))
     if (is.facetable(data, pdesc$category))
         p = p + gen.fcts(data, pdesc$category) 
+    if (!is.null(pdesc$yscale)) {
+        scale = paste('scale_y', pdesc$yscale, sep='_')
+        f = get(scale)
+        p = p + f()
+    }
+    return (p)
 }
 
 is.facetable = function(data, category) {
@@ -127,11 +142,6 @@ process.plot = function(gdesc, pdesc) {
     f = get(gdesc)
     open_device(gdesc, pdesc$fileprefix, pdesc$height, pdesc$width)
     plt = f(pdesc$data, pdesc)
-    if (!is.null(pdesc$yscale)) {
-        scale = paste('scale_y', pdesc$yscale, sep='_')
-        f = get(scale)
-        plt  = plt + f()
-    }
     if (!is.null(pdesc$Title))
         plt = plt + opts(title=pdesc$Title)
     print(plt)
@@ -139,13 +149,14 @@ process.plot = function(gdesc, pdesc) {
 }
 
 build_condition = function(x, values, sep='==', condition='|') {
-    paste(paste(x, values, sep=sep), sep=condition)
+    paste(paste(x, values, sep=sep), collapse=condition)
 }
 
 process.graphs = function(pdesc, ddesc) {
     basic = c('Time', ddesc$category, 'test.name')
     sel = c(basic, pdesc$group)
     pdesc$data = ddesc$data[, sel]
+    
     pdesc$data = modify(pdesc$data, pdesc$group, pdesc$trans)
     if (!is.null(pdesc$alias)) {
         if (length(pdesc$alias) < length(pdesc$group))
@@ -168,7 +179,13 @@ jitbox = function(data, pdesc) {
     if (is.facetable(data, pdesc$category)) {
             facet = gen.fcts(data, pdesc$category)
             p = p + facet + opts(axis.text.x=theme_text(angle=90))
-    } else p
+    }
+    if (!is.null(pdesc$yscale)) {
+        scale = paste('scale_y', pdesc$yscale, sep='_')
+        f = get(scale)
+        p = p + f()
+    }
+    return (p)
 }
 
 boxjit = function(data, pdesc) {
@@ -180,11 +197,14 @@ boxjit = function(data, pdesc) {
     p = ggplot(data, aes_string(x=pdesc$category, y='value')) + geom_boxplot() + geom_jitter(alpha=I(1/pdesc$alpha)) 
     if (is.facetable(data, pdesc$category)) {
             facet = gen.fcts(data, pdesc$category)
-            if (!is.null(facet)) {
-                print('no facet')
-                p = p + facet + opts(axis.text.x=theme_text(angle=90))
-            }
-    } else p
+            p = p + facet + opts(axis.text.x=theme_text(angle=90))
+    }
+    if (!is.null(pdesc$yscale)) {
+        scale = paste('scale_y', pdesc$yscale, sep='_')
+        f = get(scale)
+        p = p + f()
+    }
+    return (p)
 }
 
 timeseries = function(data, pdesc) {
@@ -225,6 +245,7 @@ data.processor = function(ddesc, path) {
         ddesc$exclude = paste("'", ddesc$exclude, "'", sep='')
         excludes = build_condition(paste('ddesc$data', ddesc$category, sep='$'), ddesc$exclude, sep='!=', condition='&')
         ddesc$data = ddesc$data[eval(parse(text=excludes)),] 
+        ddesc$data[[ddesc$category]] = factor(ddesc$data[[ddesc$category]])
     }
     nms = names(ddesc)
     processors = nms != 'category' & nms != 'pattern' & nms != 'exclude' & nms != 'data'
