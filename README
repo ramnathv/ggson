@@ -1,11 +1,19 @@
-ggson is declarative way for producing plots using ggplot for SAR output.
+ggson: declarative way for producing repetitive plots
+======================================================
 
-ggplot2 give elegant plots, typical performance assignment needs to be able to plot SAR output.
-ggplot2 is simple to use library, however, using it repeatedly becomes boring. With ggson you
-specify the how to search a perticular file variable inside it and the type of plots you want:
-box, jitter, jitter+box, scatter. 
+Introduction
+------------
+System administrators or Performance Engineers need plots from SAR outputs. Producing the same set of plots for different outputs becomes boring. ggson allows user to specify the input search pattern, variables to plot, and type of plot (boxplot, jitter, scatter) in a json file. Now, this JSON can now be used for anytime you have CSV output of sar.
 
-For example, you have sar data for two tests and extracted in CSV format.
+Advantage
+---------
+You can have different JSON input for different version of sar and get the same set of ouuput.
+
+
+Example
+------
+For example, you have sar CPU data for two tests and extracted in CSV format.
+
     alltest/
         test1/
             |
@@ -16,6 +24,7 @@ For example, you have sar data for two tests and extracted in CSV format.
 
 
 Create a JSON
+    cat > cpu.json
     {
         "CPU_compare" {
             "pattern" : "*.cpu$",
@@ -25,7 +34,7 @@ Create a JSON
                 "graph" : ["boxplt", "timeseries" ]
             }
     }
+    ^D
 
-You can provide this JSON to ggson and it will provide you a boxplot and scatter plot.
-There are many other options you can add to JSON check out all.json file to get a feel.
+Run `Rscript main.r -s alltest -j cpu.json -d path/to/store/plots`
 
