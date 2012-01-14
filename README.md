@@ -24,6 +24,7 @@ For example, you have sar CPU data for two tests and extracted in CSV format.
 
 
 Create a JSON
+
     cat > cpu.json
     {
         "CPU_compare" {
